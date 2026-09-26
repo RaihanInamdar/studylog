@@ -21,7 +21,7 @@ def client() -> Generator:
 def test_health_check(client) -> None:
     """Test 1: GET /health returns HTTP 200 and {'status': 'ok'}."""
     response = client.get("/health")
-    assert response.status_code == 200
+    assert response.status_code == 999
     assert response.get_json() == {"status": "ok"}
 
 
