@@ -1,0 +1,26 @@
+# ==============================================================================
+# StudyLog Render Instance Keep-Alive Workflow
+# Keeps the Render free-tier web service warm by pinging /health every 10 minutes.
+# NOTE: This workflow is separate from ci-cd.yml to avoid cluttering build runs.
+# ==============================================================================
+
+name: Render Keep-Alive
+
+# Trigger on a recurring cron schedule (every 10 minutes) or manually from Actions tab
+on:
+  schedule:
+    # Run every 10 minutes: cron syntax (* / 10 * * * *)
+    - cron: "*/10 * * * *"
+  # Allows triggering the keep-alive ping manually from GitHub web UI
+  workflow_dispatch:
+
+jobs:
+  # Single lightweight job to ping health endpoint
+  ping-health:
+    name: Ping /health Endpoint
+    runs-on: ubuntu-latest
+    steps:
+      # Send silent HTTP GET request with 60s timeout; fallback to true to prevent red alerts
+      - name: Ping Live Application Health
+        run: |
+          curl --silent --max-time 60 "${{ secrets.LIVE_APP_URL }}/health" || true

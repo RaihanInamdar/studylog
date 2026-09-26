@@ -1,0 +1,23 @@
+# Python virtual environment
+venv/
+.venv/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest cache and test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables and secrets
+.env
+
+# Build and IDE artifacts
+*.egg-info/
+dist/
+build/
+.vscode/
+.idea/

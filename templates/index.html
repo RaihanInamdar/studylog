@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyLog - Study Hours Logger & Weekly Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>StudyLog</h1>
+                <p class="tagline">Study Hours Logger and Subject-wise Progress Tracker</p>
+            </div>
+            <div class="header-actions">
+                <form action="{{ url_for('seed') }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="btn btn-secondary">Load Sample Data</button>
+                </form>
+            </div>
+        </header>
+
+        {% if error %}
+        <div class="alert-error">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- Top Highlight Summary Cards -->
+        <section class="hero-stats">
+            <div class="stat-card">
+                <div class="stat-title">Most Studied Subject</div>
+                <div class="stat-value">
+                    {% if most_studied %}
+                        {{ most_studied[0] }} <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted);">({{ most_studied[1] }} hrs)</span>
+                    {% else %}
+                        None logged yet
+                    {% endif %}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Total Sessions Logged</div>
+                <div class="stat-value">{{ sessions|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Tracked Subjects</div>
+                <div class="stat-value">{{ summary|length }}</div>
+            </div>
+        </section>
+
+        <!-- Interactive Forms Section: Add Session & Set Weekly Goal -->
+        <div class="grid-2">
+            <!-- Add Session Form -->
+            <div class="card">
+                <h2 class="card-title">Log Study Session</h2>
+                <form action="{{ url_for('add_session') }}" method="POST">
+                    <div class="form-group">
+                        <label for="subject">Subject Name</label>
+                        <input type="text" id="subject" name="subject" placeholder="e.g. Cloud Computing" minlength="2" maxlength="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hours">Hours Studied</label>
+                        <input type="number" id="hours" name="hours" placeholder="e.g. 2.5" step="0.1" min="0.1" max="24" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Session Date</label>
+                        <input type="date" id="date" name="date" value="{{ today }}" max="{{ today }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Session</button>
+                </form>
+            </div>
+
+            <!-- Set Weekly Goal Form -->
+            <div class="card">
+                <h2 class="card-title">Set Weekly Goal</h2>
+                <form action="{{ url_for('set_goal') }}" method="POST">
+                    <div class="form-group">
+                        <label for="goal_subject">Subject Name</label>
+                        <input type="text" id="goal_subject" name="subject" placeholder="e.g. Cloud Computing" minlength="2" maxlength="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="goal_hours">Target Hours / Week</label>
+                        <input type="number" id="goal_hours" name="goal_hours" placeholder="e.g. 10.0" step="0.5" min="0.5" max="168" required>
+                    </div>
+                    <button type="submit" class="btn btn-secondary">Save Goal</button>
+                </form>
+
+                <div class="note-box">
+                    Weekly goals are tracked from Monday to Sunday of the current week.
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Progress Tracking Section -->
+        <div class="card" style="margin-bottom: 24px;">
+            <h2 class="card-title">Weekly Subject Progress (Monday – Sunday)</h2>
+            {% if weekly_progress %}
+            <div class="progress-container">
+                {% for item in weekly_progress %}
+                <div class="progress-item">
+                    <div class="progress-header">
+                        <span>
+                            <strong>{{ item.subject }}</strong>
+                            {% if item.achieved %}
+                                <span class="badge badge-success">Goal Met</span>
+                            {% elif item.goal > 0 %}
+                                <span class="badge badge-pending">In Progress</span>
+                            {% endif %}
+                        </span>
+                        <span>
+                            {{ item.logged }} / {{ item.goal }} hrs ({{ item.percentage }}%)
+                        </span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill {% if item.achieved %}achieved{% endif %}"
+                             style="width: {{ item.capped_percentage }}%;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color: var(--text-muted); font-size: 0.95rem;">No goals or sessions logged for this week yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Data Tables Grid -->
+        <div class="grid-2">
+            <!-- All Sessions Table (Newest First) -->
+            <div class="card">
+                <h2 class="card-title">All Study Sessions (Newest First)</h2>
+                {% if sessions %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in sessions %}
+                            <tr>
+                                <td>{{ s.date }}</td>
+                                <td><strong>{{ s.subject }}</strong></td>
+                                <td>{{ s.hours }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="color: var(--text-muted); font-size: 0.95rem;">No sessions recorded yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Total Hours Per Subject Table -->
+            <div class="card">
+                <h2 class="card-title">Total Hours per Subject</h2>
+                {% if summary %}
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Subject</th>
+                                <th>All-Time Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for subj, total_hrs in summary.items() %}
+                            <tr>
+                                <td><strong>{{ subj }}</strong></td>
+                                <td>{{ total_hrs }} hrs</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="color: var(--text-muted); font-size: 0.95rem;">No summary data available.</p>
+                {% endif %}
+
+                <div class="note-box" style="margin-top: 24px;">
+                    Demo data is stored in memory and resets when the app restarts.
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; StudyLog - Cloud Computing and DevOps Assignment | Version: {{ version }}</p>
+        </footer>
+    </div>
+</body>
+</html>

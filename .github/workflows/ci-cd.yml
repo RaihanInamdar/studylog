@@ -1,0 +1,139 @@
+# ==============================================================================
+# StudyLog CI/CD Pipeline
+# Continuous Integration (Lint, Test, Docker Build & Health Verification)
+# Continuous Deployment (Render Webhook Trigger on Main branch push)
+# ==============================================================================
+
+name: CI/CD Pipeline
+
+# Trigger pipeline on any push or pull request to any branch
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1: LINT
+  # Enforces PEP8 code style and formatting standards using flake8.
+  # ----------------------------------------------------------------------------
+  lint:
+    name: Lint Code (flake8)
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the repository code
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python 3.12 runtime environment
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      # Step 3: Install pinned application and linter dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Execute flake8 against codebase (must pass with zero warnings)
+      - name: Run flake8 linter
+        run: flake8 .
+
+  # ----------------------------------------------------------------------------
+  # Job 2: TEST
+  # Runs unit and integration test suite via pytest. Depends on lint passing.
+  # ----------------------------------------------------------------------------
+  test:
+    name: Run Unit Tests (pytest)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      # Step 1: Check out repository code
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python 3.12 runtime environment
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      # Step 3: Install pinned dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Step 4: Run test suite with verbose output
+      - name: Run pytest
+        run: pytest -v
+
+  # ----------------------------------------------------------------------------
+  # Job 3: DOCKER-BUILD
+  # Builds Docker image, starts container, and verifies /health endpoint responds.
+  # ----------------------------------------------------------------------------
+  docker-build:
+    name: Build & Verify Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      # Step 1: Check out repository code
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Build the Docker image from Dockerfile
+      - name: Build Docker image
+        run: docker build -t studylog .
+
+      # Step 3: Start container in background and verify /health response
+      - name: Run container & verify health
+        run: |
+          docker run -d -p 5000:5000 --name studylog studylog
+          echo "Waiting for container service to be ready..."
+          READY=0
+          for i in {1..10}; do
+            if curl --fail --silent http://localhost:5000/health; then
+              echo ""
+              echo "Health check succeeded on attempt $i"
+              READY=1
+              break
+            fi
+            echo "Waiting for app to start (attempt $i/10)..."
+            sleep 2
+          done
+          if [ $READY -ne 1 ]; then
+            echo "Error: Container health check failed after 10 retries!"
+            docker logs studylog
+            exit 1
+          fi
+
+      # Step 4: Clean up container (runs always, even on test failure)
+      - name: Stop and remove container
+        if: always()
+        run: |
+          docker stop studylog || true
+          docker rm studylog || true
+
+  # ----------------------------------------------------------------------------
+  # Job 4: DEPLOY
+  # Deploys to Render via webhook trigger.
+  # Runs ONLY on push to 'main' branch if all prior jobs succeed.
+  # ----------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+    needs: docker-build
+    # Guard condition: only deploy on push to main branch
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      # Step 1: Trigger Render webhook using secret deploy hook URL
+      - name: Trigger Render Deploy Hook
+        run: |
+          echo "Triggering Render zero-downtime deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          echo "Deploy trigger sent successfully."
