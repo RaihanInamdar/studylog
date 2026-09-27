@@ -63,6 +63,9 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
       # Step 3: Install pinned dependencies
       - name: Install dependencies
         run: |
