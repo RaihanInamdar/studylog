@@ -8,108 +8,252 @@
 </head>
 <body>
     <div class="container">
+        <!-- Top App Bar / Header -->
         <header>
-            <div>
-                <h1>StudyLog</h1>
-                <p class="tagline">Study Hours Logger and Subject-wise Progress Tracker</p>
+            <div class="brand-wrapper">
+                <div class="brand-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        <line x1="9" y1="7" x2="15" y2="7"></line>
+                        <line x1="9" y1="11" x2="13" y2="11"></line>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>
+                        StudyLog
+                        <span class="brand-badge">DevOps CI/CD</span>
+                    </h1>
+                    <p>Track daily study hours, monitor subject totals, and hit your weekly goals</p>
+                </div>
             </div>
             <div class="header-actions">
                 <form action="{{ url_for('seed') }}" method="POST" style="margin: 0;">
-                    <button type="submit" class="btn btn-secondary">Load Sample Data</button>
+                    <button type="submit" class="btn btn-seed" title="Populate store with realistic demo data">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                        </svg>
+                        Load Sample Data
+                    </button>
                 </form>
             </div>
         </header>
 
+        <!-- Error Notification Banner -->
         {% if error %}
         <div class="alert-error">
-            <strong>Error:</strong> {{ error }}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span><strong>Validation Error:</strong> {{ error }}</span>
         </div>
         {% endif %}
 
-        <!-- Top Highlight Summary Cards -->
+        <!-- Stat Highlight Cards -->
         <section class="hero-stats">
             <div class="stat-card">
-                <div class="stat-title">Most Studied Subject</div>
-                <div class="stat-value">
+                <div class="stat-top">
+                    <span class="stat-title">Total Study Time</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value">{{ total_hours }} <span style="font-size: 1rem; font-weight: 500; color: var(--slate-500);">hrs</span></div>
+                <div class="stat-subtitle">Across all recorded sessions</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-title">Most Studied</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value" style="font-size: {% if most_studied and most_studied[0]|length > 13 %}1.25rem{% else %}1.5rem{% endif %};">
                     {% if most_studied %}
-                        {{ most_studied[0] }} <span style="font-size: 1rem; font-weight: normal; color: var(--text-muted);">({{ most_studied[1] }} hrs)</span>
+                        {{ most_studied[0] }}
                     {% else %}
-                        None logged yet
+                        <span style="color: var(--slate-400); font-weight: 500;">None yet</span>
+                    {% endif %}
+                </div>
+                <div class="stat-subtitle">
+                    {% if most_studied %}
+                        {{ most_studied[1] }} hours logged
+                    {% else %}
+                        Log sessions to calculate
                     {% endif %}
                 </div>
             </div>
+
             <div class="stat-card">
-                <div class="stat-title">Total Sessions Logged</div>
+                <div class="stat-top">
+                    <span class="stat-title">Sessions Logged</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                    </div>
+                </div>
                 <div class="stat-value">{{ sessions|length }}</div>
+                <div class="stat-subtitle">Individual study logs</div>
             </div>
+
             <div class="stat-card">
-                <div class="stat-title">Tracked Subjects</div>
+                <div class="stat-top">
+                    <span class="stat-title">Active Subjects</span>
+                    <div class="stat-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                </div>
                 <div class="stat-value">{{ summary|length }}</div>
+                <div class="stat-subtitle">Tracked courses</div>
             </div>
         </section>
 
-        <!-- Interactive Forms Section: Add Session & Set Weekly Goal -->
+        <!-- Forms Grid: Add Session + Set Weekly Goal -->
         <div class="grid-2">
-            <!-- Add Session Form -->
+            <!-- Add Session Card -->
             <div class="card">
-                <h2 class="card-title">Log Study Session</h2>
+                <div class="card-header-flex">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        Log Study Session
+                    </h2>
+                    <span class="card-badge">Daily Entry</span>
+                </div>
                 <form action="{{ url_for('add_session') }}" method="POST">
                     <div class="form-group">
-                        <label for="subject">Subject Name</label>
+                        <label for="subject">
+                            Subject Name
+                        </label>
                         <input type="text" id="subject" name="subject" placeholder="e.g. Cloud Computing" minlength="2" maxlength="50" required>
                     </div>
                     <div class="form-group">
-                        <label for="hours">Hours Studied</label>
+                        <label for="hours">
+                            Hours Studied (0.1 – 24)
+                        </label>
                         <input type="number" id="hours" name="hours" placeholder="e.g. 2.5" step="0.1" min="0.1" max="24" required>
                     </div>
                     <div class="form-group">
-                        <label for="date">Session Date</label>
+                        <label for="date">
+                            Session Date
+                        </label>
                         <input type="date" id="date" name="date" value="{{ today }}" max="{{ today }}" required>
+                        <span class="form-hint">Session date cannot be in the future</span>
                     </div>
-                    <button type="submit" class="btn btn-primary">Add Session</button>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 4px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Add Study Session
+                    </button>
                 </form>
             </div>
 
-            <!-- Set Weekly Goal Form -->
+            <!-- Set Weekly Goal Card -->
             <div class="card">
-                <h2 class="card-title">Set Weekly Goal</h2>
+                <div class="card-header-flex">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <circle cx="12" cy="12" r="6"></circle>
+                            <circle cx="12" cy="12" r="2"></circle>
+                        </svg>
+                        Set Weekly Goal
+                    </h2>
+                    <span class="card-badge">Weekly Target</span>
+                </div>
                 <form action="{{ url_for('set_goal') }}" method="POST">
                     <div class="form-group">
-                        <label for="goal_subject">Subject Name</label>
+                        <label for="goal_subject">
+                            Subject Name
+                        </label>
                         <input type="text" id="goal_subject" name="subject" placeholder="e.g. Cloud Computing" minlength="2" maxlength="50" required>
                     </div>
                     <div class="form-group">
-                        <label for="goal_hours">Target Hours / Week</label>
+                        <label for="goal_hours">
+                            Target Hours / Week
+                        </label>
                         <input type="number" id="goal_hours" name="goal_hours" placeholder="e.g. 10.0" step="0.5" min="0.5" max="168" required>
                     </div>
-                    <button type="submit" class="btn btn-secondary">Save Goal</button>
+                    <button type="submit" class="btn btn-secondary" style="margin-top: 4px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Save Weekly Goal
+                    </button>
                 </form>
 
                 <div class="note-box">
-                    Weekly goals are tracked from Monday to Sunday of the current week.
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Goals reset every Monday at 00:00 and evaluate sessions logged within the current week.
                 </div>
             </div>
         </div>
 
-        <!-- Weekly Progress Tracking Section -->
+        <!-- Weekly Progress Card -->
         <div class="card" style="margin-bottom: 24px;">
-            <h2 class="card-title">Weekly Subject Progress (Monday – Sunday)</h2>
+            <div class="card-header-flex">
+                <h2 class="card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    Weekly Subject Progress
+                </h2>
+                <span class="card-badge">{{ week_range }}</span>
+            </div>
+
             {% if weekly_progress %}
-            <div class="progress-container">
+            <div class="progress-list">
                 {% for item in weekly_progress %}
                 <div class="progress-item">
                     <div class="progress-header">
-                        <span>
-                            <strong>{{ item.subject }}</strong>
+                        <div class="progress-subject">
+                            <span>{{ item.subject }}</span>
                             {% if item.achieved %}
-                                <span class="badge badge-success">Goal Met</span>
+                                <span class="badge badge-success">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Goal Met
+                                </span>
                             {% elif item.goal > 0 %}
                                 <span class="badge badge-pending">In Progress</span>
+                            {% else %}
+                                <span class="badge badge-neutral">No Goal Set</span>
                             {% endif %}
-                        </span>
-                        <span>
-                            {{ item.logged }} / {{ item.goal }} hrs ({{ item.percentage }}%)
-                        </span>
+                        </div>
+                        <div class="progress-stats">
+                            {% if item.goal > 0 %}
+                                <strong>{{ item.logged }}</strong> / {{ item.goal }} hrs ({{ item.percentage }}%)
+                            {% else %}
+                                <strong>{{ item.logged }}</strong> hrs logged
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="progress-bar-bg">
                         <div class="progress-bar-fill {% if item.achieved %}achieved{% endif %}"
@@ -119,15 +263,39 @@
                 {% endfor %}
             </div>
             {% else %}
-            <p style="color: var(--text-muted); font-size: 0.95rem;">No goals or sessions logged for this week yet.</p>
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="6"></circle>
+                        <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                </div>
+                <div class="empty-title">No Weekly Goals or Sessions Yet</div>
+                <div class="empty-desc">
+                    Set a weekly target or log a study session above to view your real-time subject progress bars.
+                </div>
+            </div>
             {% endif %}
         </div>
 
-        <!-- Data Tables Grid -->
+        <!-- Tables Grid: Recent Sessions + Subject Totals -->
         <div class="grid-2">
-            <!-- All Sessions Table (Newest First) -->
+            <!-- All Sessions (Newest First) -->
             <div class="card">
-                <h2 class="card-title">All Study Sessions (Newest First)</h2>
+                <div class="card-header-flex">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Study Sessions
+                    </h2>
+                    <span class="card-badge">Newest First</span>
+                </div>
+
                 {% if sessions %}
                 <div class="table-responsive">
                     <table>
@@ -135,59 +303,104 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Subject</th>
-                                <th>Hours</th>
+                                <th style="text-align: right;">Hours</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for s in sessions %}
                             <tr>
-                                <td>{{ s.date }}</td>
+                                <td><span class="date-pill">{{ s.date }}</span></td>
                                 <td><strong>{{ s.subject }}</strong></td>
-                                <td>{{ s.hours }}</td>
+                                <td style="text-align: right;"><span class="hours-pill">{{ s.hours }} hrs</span></td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p style="color: var(--text-muted); font-size: 0.95rem;">No sessions recorded yet.</p>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    </div>
+                    <div class="empty-title">No Study Sessions Logged</div>
+                    <div class="empty-desc">
+                        Your session log is clean. Use the "Log Study Session" form above to record your first study time.
+                    </div>
+                </div>
                 {% endif %}
             </div>
 
-            <!-- Total Hours Per Subject Table -->
+            <!-- Subject-wise Total Hours -->
             <div class="card">
-                <h2 class="card-title">Total Hours per Subject</h2>
+                <div class="card-header-flex">
+                    <h2 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <pie-chart></pie-chart>
+                            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                            <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                        </svg>
+                        Total Hours per Subject
+                    </h2>
+                    <span class="card-badge">All-Time</span>
+                </div>
+
                 {% if summary %}
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
                                 <th>Subject</th>
-                                <th>All-Time Hours</th>
+                                <th style="text-align: right;">Total Hours</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for subj, total_hrs in summary.items() %}
                             <tr>
                                 <td><strong>{{ subj }}</strong></td>
-                                <td>{{ total_hrs }} hrs</td>
+                                <td style="text-align: right;"><span class="hours-pill">{{ total_hrs }} hrs</span></td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p style="color: var(--text-muted); font-size: 0.95rem;">No summary data available.</p>
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                            <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                        </svg>
+                    </div>
+                    <div class="empty-title">No Summary Available</div>
+                    <div class="empty-desc">
+                        Subject totals will automatically aggregate here once sessions are recorded.
+                    </div>
+                </div>
                 {% endif %}
 
-                <div class="note-box" style="margin-top: 24px;">
+                <div class="note-box" style="margin-top: 20px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
                     Demo data is stored in memory and resets when the app restarts.
                 </div>
             </div>
         </div>
 
+        <!-- Footer -->
         <footer>
-            <p>&copy; StudyLog - Cloud Computing and DevOps Assignment | Version: {{ version }}</p>
+            <div class="footer-left">
+                <span>&copy; StudyLog | Cloud Computing & DevOps (CCA 2)</span>
+            </div>
+            <div class="version-pill">
+                <span class="dot-live"></span>
+                <span>Version: {{ version }}</span>
+            </div>
         </footer>
     </div>
 </body>

@@ -147,8 +147,8 @@ docker stop studylog-app && docker rm studylog-app
 
 1. **In-Memory Storage (`store.py`):**
    Storage is implemented entirely in memory using Python standard collections (`list` and `dict`) protected by a `threading.Lock`. This intentional architecture choice keeps the project lightweight, eliminates external database management dependencies, and keeps the assignment focus squarely on the automated CI/CD pipeline, container health verification, and deployment orchestration.
-2. **Deterministic Sample Data on Startup (`seed_demo=True`):**
-   The application factory loads sample data on initial boot so evaluators and visitors never encounter an empty UI. Sample dates are dynamically computed within the current calendar week (Monday to today) so progress bars reflect realistic data immediately.
+2. **Clean Initial Startup with On-Demand Sample Data:**
+   The application starts completely fresh with an empty store (`seed_demo=False`), displaying elegant empty states. A "Load Sample Data" button is available in the UI to populate 5 realistic sample sessions across 3 subjects and 3 goals on demand whenever needed for demonstration.
 3. **Single Gunicorn Worker (`--workers 1 --threads 4`):**
    Because application data resides in process memory, running multiple worker processes would cause distinct memory spaces (state desynchronization across HTTP requests). Using exactly one worker with four concurrent threads ensures high concurrency while maintaining shared state.
 4. **Database Migration Readiness:**

@@ -20,12 +20,12 @@ def get_git_version() -> str:
     return "local"
 
 
-def create_app(seed_demo: bool = True) -> Flask:
+def create_app(seed_demo: bool = False) -> Flask:
     """Application factory for StudyLog Flask app.
 
     Args:
         seed_demo: If True, loads initial sample sessions and goals into memory.
-                   Defaults to True for production/local demo; set False for tests.
+                   Defaults to False so app starts fresh with no predefined data.
     """
     flask_app = Flask(__name__)
 
@@ -34,11 +34,19 @@ def create_app(seed_demo: bool = True) -> Flask:
 
     def _render_home(error: str = "") -> Any:
         """Helper to render home page template with all current store data."""
+        sessions = store.get_all_sessions()
+        summary = store.get_subject_summary()
+        total_hours = round(sum(s["hours"] for s in sessions), 1)
+        weekly_progress = store.get_weekly_progress()
+        monday, sunday = store.get_current_week_range()
+
         return render_template(
             "index.html",
-            sessions=store.get_all_sessions(),
-            summary=store.get_subject_summary(),
-            weekly_progress=store.get_weekly_progress(),
+            sessions=sessions,
+            summary=summary,
+            total_hours=total_hours,
+            weekly_progress=weekly_progress,
+            week_range=f"{monday.strftime('%b %d')} - {sunday.strftime('%b %d')}",
             most_studied=store.get_most_studied_subject(),
             version=get_git_version(),
             today=date.today().isoformat(),
@@ -155,8 +163,8 @@ def create_app(seed_demo: bool = True) -> Flask:
     return flask_app
 
 
-# Module-level instance for gunicorn (gunicorn app:app)
-app = create_app(seed_demo=True)
+# Module-level instance for gunicorn (gunicorn app:app) starts clean with no demo data
+app = create_app(seed_demo=False)
 
 if __name__ == "__main__":
     # Local development runner: bind to 0.0.0.0 and PORT env variable
