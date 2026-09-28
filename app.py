@@ -12,7 +12,6 @@ from flask import Flask, jsonify, redirect, render_template, request, url_for
 import store
 
 
-
 def get_git_version() -> str:
     """Return 7-character Git commit hash from Render env var, or fallback to 'local'."""
     commit_sha = os.environ.get("RENDER_GIT_COMMIT", "").strip()
