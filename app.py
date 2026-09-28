@@ -10,7 +10,7 @@ from typing import Any, Dict
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 import store
-import os, sys
+
 
 
 def get_git_version() -> str:
